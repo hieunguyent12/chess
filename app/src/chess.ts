@@ -7,8 +7,13 @@ type Move = {
     promotion_piece: string | null;
 };
 
+const ACTION_TYPES = {
+    CREATE_ROOM: "CREATE_ROOM"
+} as const;
+
 export class Chess {
     private chess: ChessWasm;
+    private socket: WebSocket;
     public board: Uint8Array;
     public turn: "w" | "b";
 
@@ -21,6 +26,8 @@ export class Chess {
 
         this.turn = this.chess.turn() as "w" | "b";
         this.board = new Uint8Array(memory.buffer, this.chess.board(), 256);
+
+        this.connectToServer();
     }
 
     public newGame() {
@@ -46,6 +53,36 @@ export class Chess {
 
         return moves.some((move) => move.from === from && move.to === to);
     }
+
+
+    // WEBSOCKETS
+
+    // Create a game with a unique name
+    public createGame(name: string) {
+        let room = {
+            type: ACTION_TYPES.CREATE_ROOM,
+            name
+        }
+        
+        this.socket.send(JSON.stringify(room));
+    }
+
+    private connectToServer() {
+        let url = "ws://127.0.0.1:8080/ws";
+        let socket = new WebSocket(url);
+        this.socket = socket;
+
+        socket.addEventListener("open", (event) => {
+            console.log('connected to chess server');
+            socket.send("hello from client");
+        })
+
+        socket.addEventListener("message", (event) => {
+            // console.log(JSON.parse(event.data));
+            console.log(event.data);
+        })
+    }
+
 }
 
 

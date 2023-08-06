@@ -1,47 +1,63 @@
-use futures_util::{future, StreamExt, TryStreamExt};
-use std::{env, io::Error as IoError};
-use tokio::{self, net::TcpListener};
+use chess_backend::chess_server::ChessServer;
+mod game_action;
+use game_action::GameAction;
+use actix_web::{web, App, HttpResponse, HttpServer};
 
-#[tokio::main]
-async fn main() -> Result<(), IoError> {
-    let addr = env::args()
-        .nth(1)
-        .unwrap_or_else(|| "127.0.0.1:8080".to_string());
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    let server = ChessServer {
+         address: "127.0.0.1",
+         port: 8080
+    };
 
-    let try_socket = TcpListener::bind(&addr).await;
-    let listener = try_socket.expect("Failed to bind TcpListener");
-    println!("Listening on {}", addr);
+    println!("Starting server...");
 
-    while let Ok((stream, addr)) = listener.accept().await {
-        tokio::spawn(async {
-            let addr = stream.peer_addr().expect("peer address not found");
-            println!("Peer address: {}", addr);
+    let server = server.build().unwrap();
 
-            let mut ws_stream = tokio_tungstenite::accept_async(stream)
-                .await
-                .expect("Error during the websocket handshake");
-
-            println!("New websocket connection {}", addr);
-
-            while let Some(msg) = ws_stream.next().await {
-                let msg = msg.expect("unable to read message");
-
-                println!("{}: {}", addr, msg);
-            }
-
-            // TODO:
-            // keep track of connected clients
-            // create a unique room
-
-            // read.try_filter(|msg| {
-            //     println!("{}", msg);
-            //     future::ready(msg.is_text() || msg.is_binary())
-            // })
-            // .forward(write)
-            // .await
-            // .expect("Failed to forward messages")
-        });
-    }
+    server.await;
 
     Ok(())
 }
+
+
+/*//! Simple echo websocket server.
+//!
+//! Open `http://localhost:8080/` in browser to test.
+
+use actix_files::NamedFile;
+use actix_web::{middleware, web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web_actors::ws;
+
+// mod server;
+// use self::server::MyWebSocket;
+
+async fn index() -> impl Responder {
+    NamedFile::open_async("./static/index.html").await.unwrap()
+}
+
+/// WebSocket handshake and start `MyWebSocket` actor.
+async fn echo_ws(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
+    ws::start(MyWebSocket {}, &req, stream)
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+    // env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
+    // log::info!("starting HTTP server at http://localhost:8080");
+
+    HttpServer::new(|| {
+        App::new()
+            // WebSocket UI HTML file
+            // .service(web::resource("/").to(index))
+            // websocket route
+            // .route("/ws/", web::get().to(index))
+            .service(web::resource("/ws").route(web::get().to(echo_ws)))
+            // enable logger
+            .wrap(middleware::Logger::default())
+    })
+    // .workers(2)
+    .bind(("127.0.0.1", 8080))?
+    .run()
+    .await
+}*/

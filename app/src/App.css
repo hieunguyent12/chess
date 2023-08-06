@@ -15,20 +15,21 @@ body {
   touch-action: none;
 }
 
+#root {
+  width: 100%;
+  height: 100%;
+}
+
 #app {
   width: 100%;
   height: 100%;
 }
 
-#root {
+.chess-container {
   display: flex;
   align-items: center;
+  flex-direction: column;
 
-  width: 100%;
-  height: 100%;
-}
-
-.chess-container {
   width: 100%;
   height: 100%;
 }
@@ -116,6 +117,17 @@ body {
 .dark {
   background-color: #eeeed2;
 }
+
+.room-input-container {
+    margin-top: 1rem;
+}
+
+
+
+
+
+
+
 
 /* https://stackoverflow.com/questions/11160227/translate-x-and-y-percentage-values-based-on-elements-height-and-width */
 .sq-a8 {
