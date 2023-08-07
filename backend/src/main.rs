@@ -2,6 +2,8 @@ use chess_backend::chess_server::ChessServer;
 mod game_action;
 use game_action::GameAction;
 use actix_web::{web, App, HttpResponse, HttpServer};
+use actix::prelude::*;
+
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -12,8 +14,8 @@ async fn main() -> std::io::Result<()> {
 
     println!("Starting server...");
 
-    let server = server.build().unwrap();
 
+    let server = server.build().unwrap();
     server.await;
 
     Ok(())

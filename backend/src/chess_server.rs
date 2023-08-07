@@ -1,6 +1,8 @@
-use actix::{Actor, StreamHandler};
-use actix_web::{dev::Server, web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix::{Actor, Addr};
+use actix_web::{dev::Server, get, web, App, Error, HttpRequest, HttpResponse, HttpServer};
 use actix_web_actors::ws;
+
+use crate::{session::WsChessSession, websocket_server::WsChessServer};
 
 pub struct ChessServer<'a> {
     pub address: &'a str,
@@ -9,19 +11,36 @@ pub struct ChessServer<'a> {
 
 impl<'a> ChessServer<'a> {
     pub fn build(&self) -> Result<Server, Error> {
-        let server = HttpServer::new(|| {
+        let websocket_server = WsChessServer::new().start();
+
+        let server = HttpServer::new(move || {
             App::new()
                 // .route("/", web::get().to(hello))
                 // .route("/ws/", web::get().to(websocket))
-                .service(web::resource("/ws").route(web::get().to(websocket)))
+                .app_data(web::Data::new(websocket_server.clone()))
+                .service(websocket)
         })
         .bind(("127.0.0.1", 8080))?
         .run();
+
         Ok(server)
     }
 }
 
-struct ChessWs;
+#[get("/ws")]
+async fn websocket(
+    req: HttpRequest,
+    stream: web::Payload,
+    ws_server: web::Data<Addr<WsChessServer>>,
+) -> Result<HttpResponse, Error> {
+    ws::start(
+        WsChessSession::new(ws_server.get_ref().clone()),
+        &req,
+        stream,
+    )
+}
+
+/*struct ChessWs;
 
 impl Actor for ChessWs {
     type Context = ws::WebsocketContext<Self>;
@@ -36,10 +55,4 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChessWs {
             _ => (),
         }
     }
-}
-
-async fn websocket(req: HttpRequest, stream: web::Payload) -> Result<HttpResponse, Error> {
-    let resp = ws::start(ChessWs {}, &req, stream);
-
-    resp
-}
+}*/
