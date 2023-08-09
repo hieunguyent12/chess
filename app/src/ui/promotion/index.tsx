@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import pieces from '../../assets/pieces.svg';
 
 type PromotionWindowProps = {
@@ -16,7 +16,6 @@ export function PromotionWindow({
     closePromotionWindow,
     onSelectPromotionPiece
 }: PromotionWindowProps) {
-    const [isAtBottom, setIsAtBottom] = useState(false);
     const promotionWindowRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -41,15 +40,13 @@ export function PromotionWindow({
             const fileChar = parts[3];
             const rank = parts[4];
 
-           let file = fileChar.charCodeAt(0) - 97;
+            let file = fileChar.charCodeAt(0) - 97;
 
-           if (parseInt(rank) === 1) {
-               promotionWindowRef.current.style.transform = `translate(${file * 100}%, 100%)`;
-               setIsAtBottom(true);
-           } else {
-               setIsAtBottom(false);
-           }
-            
+            if (parseInt(rank) === 1) {
+                promotionWindowRef.current.style.transform = `translate(${file * 100}%, 100%)`;
+            } else {
+            }
+
         }
     }, [isAwaitingPromotion, square])
 

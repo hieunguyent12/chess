@@ -24,13 +24,13 @@ function Board({ board, turn, play_move, getLegalMoves }: BoardProps) {
         color: string,
         from: string,
         to: string | null,
-        promotion_piece: string | null 
+        promotion_piece: string | null
     } | null>(null);
     const dnd = useDndStore(state => ({ ...state }), shallow);
     const [isAwaitingPromotion, setIsPromoting] = useState(false);
 
     const onStartDragging = (e: React.MouseEvent, from: string, color: string) => {
-
+        e.preventDefault();
         if (turn !== color) return;
         if (!boardEl.current) return;
         if (!hoverSquareRef.current) return;
@@ -150,10 +150,6 @@ function Board({ board, turn, play_move, getLegalMoves }: BoardProps) {
                     color={color == 0 ? "white" : "black"}
                     type={type}
                     onStartDragging={onStartDragging}
-                    // move={move}
-                    // turn={turn}
-                    // can_move={can_move}
-                    // flipped={flipped}
                     key={idx}
                 />
             );
@@ -250,12 +246,12 @@ function Board({ board, turn, play_move, getLegalMoves }: BoardProps) {
             if (!el) return;
             boardEl.current = el;
             boardRectRef.current = el.getBoundingClientRect();
-        }}>
+        }} onMouseDown={e => e.preventDefault()}>
             <PromotionWindow isAwaitingPromotion={isAwaitingPromotion}
                 square={moveRef.current ? `sq-${moveRef.current.to}` : ""}
                 closePromotionWindow={closePromotionWindow}
                 onSelectPromotionPiece={onSelectPromotionPiece}
-                color={moveRef.current ? moveRef.current.color : undefined} 
+                color={moveRef.current ? moveRef.current.color : undefined}
             />
             <div ref={hoverSquareRef} className="hover-square"></div>
             {renderBoard()}

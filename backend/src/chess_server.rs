@@ -25,7 +25,7 @@ impl<'a> ChessServer<'a> {
 
         Ok(server)
     }
-}
+} 
 
 #[get("/ws")]
 async fn websocket(
@@ -39,20 +39,3 @@ async fn websocket(
         stream,
     )
 }
-
-/*struct ChessWs;
-
-impl Actor for ChessWs {
-    type Context = ws::WebsocketContext<Self>;
-}
-
-impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for ChessWs {
-    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
-        match msg {
-            Ok(ws::Message::Ping(msg)) => ctx.pong(&msg),
-            Ok(ws::Message::Text(text)) => ctx.text(text),
-            Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
-            _ => (),
-        }
-    }
-}*/

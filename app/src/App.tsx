@@ -11,7 +11,8 @@ function App() {
         return chess;
     });
     const [, rerender] = useState({});
-    const [roomName, setRoomName] = useState("");
+    const [gameName, setGameName] = useState("");
+    const [joinGameId, setJoinGameId] = useState("");
 
     const getLegalMoves = (from: string): Move[] => {
         return chess.getLegalMoves(from);
@@ -30,20 +31,41 @@ function App() {
     }
 
     const createGame = () => {
-        if (roomName === "") {
-            console.log('room name cannot be emtpy');
+        if (gameName === "") {
+            console.log('game name cannot be emtpy');
             return;
         }
 
-        chess.createGame(roomName);
+        chess.createGame(gameName);
     }
+
+    const joinGame = () => {
+        if (joinGameId === "") {
+            console.log('game id cannot be emtpy');
+            return;
+        }
+
+        chess.joinGame(joinGameId);
+        setTimeout(() => {
+            rerender({});
+        }, 1000);
+    }
+
+    useEffect(() => {
+        chess.subscribeToOpponentMove(() => rerender({}));
+    }, [])
 
     return (
         <div className="chess-container">
             <Board board={chess.board} turn={chess.turn == "w" ? "white" : "black"} play_move={play_move} getLegalMoves={getLegalMoves} />
             <div className="room-input-container">
-                <input value={roomName} onChange={e => setRoomName(e.target.value)} type="text" placeholder="room name" />
+                <input value={gameName} onChange={e => setGameName(e.target.value)} type="text" placeholder="game name" />
                 <button onClick={createGame}>create</button>
+            </div>
+            <div className="room-input-container">
+                <input value={joinGameId} onChange={e => setJoinGameId(e.target.value)} type="text" placeholder="game id" />
+                <button onClick={joinGame}>join</button>
+                <button onClick={() => console.log(chess)}>Log state</button>
             </div>
         </div>
     )
