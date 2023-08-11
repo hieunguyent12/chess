@@ -9,15 +9,15 @@ import { PromotionWindow } from '../promotion';
 type BoardProps = {
     board: Uint8Array,
     turn: string;
+    flipped: boolean;
     play_move: (m: Move) => void;
     getLegalMoves: (sq: string) => Move[];
 }
 
-function Board({ board, turn, play_move, getLegalMoves }: BoardProps) {
+function Board({ board, turn, flipped, play_move, getLegalMoves }: BoardProps) {
     const boardEl = useRef<HTMLDivElement | null>(null);
     const boardRectRef = useRef<DOMRect | null>(null);
     const hoverSquareRef = useRef<HTMLDivElement | null>(null);
-    // const promotionWindowRef = useRef<HTMLDivElement | null>(null);
     // TODO: handle this in the library
     const legalMovesRef = useRef<Move[]>([]);
     const moveRef = useRef<{
@@ -50,7 +50,7 @@ function Board({ board, turn, play_move, getLegalMoves }: BoardProps) {
         legalMoves.forEach(m => {
             // create a div that highlights the square
             const highlightDiv = document.createElement("div");
-            highlightDiv.className = `highlight sq-${m.to}`;
+            highlightDiv.className = `highlight ${flipped ? "flipped" : ""} sq-${m.to}`;
 
             boardEl.current.appendChild(highlightDiv);
         })
@@ -78,7 +78,7 @@ function Board({ board, turn, play_move, getLegalMoves }: BoardProps) {
 
     }
 
-    const onSelectPromotionPiece = (color: string, type: string) => {
+    const onSelectPromotionPiece = (_: string, type: string) => {
         if (!moveRef.current) return;
 
         try {
@@ -151,6 +151,7 @@ function Board({ board, turn, play_move, getLegalMoves }: BoardProps) {
                     type={type}
                     onStartDragging={onStartDragging}
                     key={idx}
+                    flipped={flipped}
                 />
             );
 
@@ -178,11 +179,11 @@ function Board({ board, turn, play_move, getLegalMoves }: BoardProps) {
 
             let file = clamp(Math.floor(x / pieceRect.width), 0, 7);
             let rank = clamp(7 - Math.floor(y / pieceRect.height) + 1, 1, 8);
-            let to = `${String.fromCharCode(97 + file)}${rank}`;
+            let to = `${flipped ? String.fromCharCode(201 - (97 + file)) : String.fromCharCode(97 + file)}${flipped ? 9 - rank : rank}`;
 
             moveRef.current.to = to;
 
-            hoverSquareRef.current.className = `hover-square sq-${to}`;
+            hoverSquareRef.current.className = `hover-square ${flipped ? "flipped" : ""} sq-${to}`;
             // hoverSquareRef.current.classList.toggle(`sq-${String.fromCharCode(97 + file)}${rank}`);
 
             let pieceX = Math.floor(x - pieceRect.width / 2);
@@ -242,13 +243,14 @@ function Board({ board, turn, play_move, getLegalMoves }: BoardProps) {
     }, [dnd.isDragging, isAwaitingPromotion])
 
     return (
-        <div className="chess-board" ref={(el) => {
+        <div className={`chess-board ${flipped ? "flipped" : ""}`} ref={(el) => {
             if (!el) return;
             boardEl.current = el;
             boardRectRef.current = el.getBoundingClientRect();
         }} onMouseDown={e => e.preventDefault()}>
-            <PromotionWindow isAwaitingPromotion={isAwaitingPromotion}
-                square={moveRef.current ? `sq-${moveRef.current.to}` : ""}
+            <PromotionWindow 
+                isAwaitingPromotion={isAwaitingPromotion}
+                square={moveRef.current ? `${flipped ? "flipped" : ""} sq-${moveRef.current.to}` : ""}
                 closePromotionWindow={closePromotionWindow}
                 onSelectPromotionPiece={onSelectPromotionPiece}
                 color={moveRef.current ? moveRef.current.color : undefined}
@@ -263,16 +265,16 @@ type PieceProps = {
     type: string,
     color: string,
     square: string,
+    flipped: boolean;
     onStartDragging: (e: React.MouseEvent, from: string, color: string) => void;
 }
 
-function Piece({ type, color, square, onStartDragging }: PieceProps) {
+function Piece({ type, color, square, flipped, onStartDragging }: PieceProps) {
     return <svg
         onMouseDown={(e) => onStartDragging(e, square, color)}
         // onTouchStart={onTouchStart}
         viewBox="0 0 45 45"
-        // ref={pieceEl}
-        className={`svg-piece sq-${square}`}
+        className={`svg-piece ${flipped ? "flipped" : ""} sq-${square}`}
     >
         <use href={`${pieces}#piece-${color}-${type}`}></use>
     </svg>

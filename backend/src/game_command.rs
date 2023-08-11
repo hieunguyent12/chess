@@ -7,17 +7,20 @@ use uuid::Uuid;
 pub struct CreateGame {
     pub name: String,
     pub player_one_id: Uuid,
+    // player one color
+    pub color: String
 }
 
 #[derive(Message, Deserialize, Serialize, Debug)]
 #[rtype(result = "Result<Uuid, String>")]
 pub struct JoinGame {
+    #[serde(skip_serializing)]
     pub id: Uuid,
-    /// The second player id
     pub player_id: Uuid,
+    pub player_name: String,
+    #[serde(skip_deserializing)]
+    pub color: String
 }
-
-pub struct JoinGameResponse(pub Uuid);
 
 #[derive(Message, Deserialize, Serialize, Debug)]
 #[rtype(result = "()")]
@@ -33,11 +36,28 @@ pub struct PlayMove {
     pub game_id: Uuid,
 }
 
+#[derive(Message, Serialize, Deserialize, Debug)]
+#[rtype(result = "()")]
+pub struct UpdateName {
+    pub name: String,
+
+    pub id: Uuid,
+}
+
+#[derive(Message, Serialize, Deserialize, Debug)]
+#[rtype(result = "()")]
+pub struct UpdateGameStatus {
+    pub to_id: Uuid,
+    pub status: String
+}
+
 #[derive(Debug)]
 pub enum GameCommand {
     CreateGame(CreateGame),
     JoinGame(JoinGame),
     PlayMove(PlayMove),
+    UpdateName(UpdateName),
+    UpdateGameStatus(UpdateGameStatus)
 }
 
 /*
@@ -69,6 +89,20 @@ impl GameCommand {
                     .map_err(|_| "incorrect data format for PlayMove")?;
 
                 Ok(Self::PlayMove(game_data))
+            }
+
+            Some(("UpdateName", data)) => {
+                let game_data = serde_json::from_str::<UpdateName>(data)
+                    .map_err(|_| "incorrect data format for UpdateName")?;
+
+                Ok(Self::UpdateName(game_data))
+            }
+
+            Some(("UpdateGameStatus", data)) => {
+                let game_data = serde_json::from_str::<UpdateGameStatus>(data)
+                    .map_err(|_| "incorrect data format for UpdateGameStatus")?;
+
+                Ok(Self::UpdateGameStatus(game_data))
             }
             _ => Err("Unable to parse command"),
         }

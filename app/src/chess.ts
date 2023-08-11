@@ -7,18 +7,43 @@ type Move = {
     promotion_piece: string | null;
 };
 
+function splitStringOnce(s: string, delimiter: string) {
+    var i = s.indexOf(delimiter);
+    var splits = [s.slice(0, i), s.slice(i + 1)];
+
+    return splits;
+}
+
+interface Opponent {
+    player_id: string;
+    player_name: string
+}
+
+interface GameStatus {
+    checkmating: boolean,
+    checkmated: boolean,
+    draw: boolean
+}
+
 export class Chess {
-    private chess: ChessWasm;
-    private socket: WebSocket;
     public socket_player_id: null | string;
     public board: Uint8Array;
     public turn: "w" | "b";
+    public opponent: Opponent;
+    public gameStatus: GameStatus = {
+        checkmated: false,
+        checkmating: false,
+        draw: false
+    };
 
+    private chess: ChessWasm;
+    private socket: WebSocket;
     private default_fen =
         "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
     private new_fen = "8/k4P2/8/8/8/8/2p5/7K w - - 0 1";
     private subscribers: (() => void)[] = [];
+    private opponentConnectSubscribers: ((opponent: Opponent) => void)[] = [];
+    private gameStatusSubscribers: ((newStatus: GameStatus) => void)[] = [];
 
     constructor() {
         this.chess = ChessWasm.new();
@@ -30,7 +55,7 @@ export class Chess {
     }
 
     public newGame() {
-        this.chess.load_fen(this.default_fen);
+        this.chess.load_fen(this.new_fen);
     }
 
     public getLegalMoves(sq: string) {
@@ -39,6 +64,33 @@ export class Chess {
 
     public move(move: Move) {
         this.chess.play_move(move);
+
+        if (this.chess.is_checkmate()) {
+            if (this.chess.turn() === this.turn) {
+                this.gameStatus.checkmated = true;
+                console.log("you lost the game");
+            } else {
+                this.gameStatus.checkmating = true;
+                console.log("you won the game");
+            }
+        }
+
+        if (this.chess.is_draw()) {
+            this.gameStatus.draw = true;
+            console.log("game draw");
+        }
+
+        if (this.chess.is_repetition()) {
+            this.gameStatus.draw = true;
+            console.log("draw by repetition");
+        }
+
+        if (this.chess.is_insufficient_materials()) {
+            this.gameStatus.draw = true;
+            console.log("draw by insufficient materials");
+        }
+
+        this.gameStatusSubscribers.forEach(sub => sub(this.gameStatus))
 
         this.socket.send(`Move ${JSON.stringify({
             player_id: this.socket_player_id,
@@ -62,29 +114,48 @@ export class Chess {
 
         let game = {
             name,
-            player_one_id: this.socket_player_id
+            player_one_id: this.socket_player_id,
+            color: this.turn
         };
 
         this.socket.send(`CreateGame ${JSON.stringify(game)}`);
     }
 
-    public joinGame(id: string) {
+    public joinGame(id: string, player_name: string) {
         if (id === "" || this.socket_player_id === "") return;
 
 
         let game = {
             id,
-            player_id: this.socket_player_id
+            player_id: this.socket_player_id,
+            player_name
         };
 
         this.socket.send(`JoinGame ${JSON.stringify(game)}`);
+    }
+
+    public updateName(name: String) {
+        if (name === "" || name.length > 50 || this.socket_player_id === "") return;
+
+        this.socket.send(`UpdateName ${JSON.stringify({
+            name,
+            id: this.socket_player_id
+        })}`)
     }
 
     public subscribeToOpponentMove(cb: () => void) {
         this.subscribers.push(cb);
     }
 
-    private set_turn(turn: "w" | "b") {
+    public subscribeToGameStatus(cb: (newStatus: GameStatus) => void) {
+        this.gameStatusSubscribers.push(cb);
+    }
+
+    public subscribeToOpponentConnect(cb: (opponent: Opponent) => void) {
+        this.opponentConnectSubscribers.push(cb);
+    }
+
+    public set_turn(turn: "w" | "b") {
         this.turn = turn;
         // this.chess.set_turn(turn);
     }
@@ -94,7 +165,7 @@ export class Chess {
         let socket = new WebSocket(url);
         this.socket = socket;
 
-        socket.addEventListener("open", (event) => {
+        socket.addEventListener("open", () => {
             console.log('connected to chess server');
         })
 
@@ -102,7 +173,7 @@ export class Chess {
             let msg = event.data as string;
 
             if (msg !== "") {
-                let parts = msg.split(" ");
+                let parts = splitStringOnce(msg, " ");
 
                 let data: any;
 
@@ -117,13 +188,26 @@ export class Chess {
                         console.log(`Game ${data} created successfully`);
                         break;
                     case "JoinGame":
-                        data = parts[1];
-                        console.log(`Joined game ${data} successfully! Starting game...`);
-                        this.set_turn("b")
+                        console.log(parts[1]);
+                        data = JSON.parse(parts[1]);
+
+                        this.opponent = {
+                            player_id: data.player_id,
+                            player_name: data.player_name
+                        };
+
+                        this.set_turn(data.color);
+                        this.opponentConnectSubscribers.forEach(sub => sub(this.opponent));
                         break;
                     case "PlayerJoined":
-                        data = parts[1];
-                        console.log(`Player ${data} joined! Starting game...`);
+                        data = JSON.parse(parts[1]);
+
+                        this.opponent = {
+                            player_id: data.player_id,
+                            player_name: data.player_name
+                        };
+
+                        this.opponentConnectSubscribers.forEach(sub => sub(this.opponent));
                         break;
                     case "PlayMove":
                         data = JSON.parse(parts[1]);
@@ -131,9 +215,52 @@ export class Chess {
                             console.log(data);
                             delete data["player_id"];
                             this.chess.play_move(data as Move);
+
+                            if (this.chess.is_checkmate()) {
+                                if (this.chess.turn() === this.turn) {
+                                    this.gameStatus.checkmated = true;
+                                    console.log("you lost the game");
+                                } else {
+                                    this.gameStatus.checkmating = true;
+                                    console.log("you won the game");
+                                }
+                            }
+
+                            if (this.chess.is_draw()) {
+                                this.gameStatus.draw = true;
+                                console.log("game draw");
+                            }
+
+                            if (this.chess.is_repetition()) {
+                                this.gameStatus.draw = true;
+                                console.log("draw by repetition");
+                            }
+
+                            if (this.chess.is_insufficient_materials()) {
+                                this.gameStatus.draw = true;
+                                console.log("draw by insufficient materials");
+                            }
+
+                            this.gameStatusSubscribers.forEach(sub => sub(this.gameStatus))
+
+
                             this.subscribers.forEach(sub => sub());
                         }
                         break;
+                    case "UpdateGameStatus":
+                        // data = parts[1];
+                        //
+                        // if (data == "checkmate") {
+                        //     this.gameStatus.checkmated = true;
+                        // }
+                        //
+                        // if (data == "draw") {
+                        //     this.gameStatus.draw = true;
+                        // }
+                        //
+                        // this.gameStatusSubscribers.forEach(sub => sub(this.gameStatus));
+                        // break;
+
                     default:
                         console.log(msg);
                         break;

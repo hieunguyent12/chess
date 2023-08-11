@@ -100,7 +100,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChessSession {
                                     .into_actor(self)
                                     .then(|res, actor, ctx| {
                                         match res {
-                                            Ok(game_id) => actor.game = Some(game_id), 
+                                            Ok(game_id) => actor.game = Some(game_id),
                                             _ => ctx.stop(),
                                         }
                                         fut::ready(())
@@ -146,6 +146,32 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChessSession {
                                     println!("game must exist to play");
                                     ctx.stop();
                                 }
+                            }
+                            GameCommand::UpdateName(msg) => {
+                                self.server_addr
+                                    .send(msg)
+                                    .into_actor(self)
+                                    .then(|res, _, ctx| {
+                                        match res {
+                                            Ok(_) => (),
+                                            _ => ctx.stop(),
+                                        }
+                                        fut::ready(())
+                                    })
+                                    .wait(ctx);
+                            }
+                            GameCommand::UpdateGameStatus(msg) => {
+                                self.server_addr
+                                    .send(msg)
+                                    .into_actor(self)
+                                    .then(|res, _, ctx| {
+                                        match res {
+                                            Ok(_) => (),
+                                            _ => ctx.stop(),
+                                        }
+                                        fut::ready(())
+                                    })
+                                    .wait(ctx);
                             }
                         };
                     }
