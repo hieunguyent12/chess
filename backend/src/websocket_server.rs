@@ -1,4 +1,4 @@
-use crate::game_command::{CreateGame, JoinGame, PlayMove, UpdateName, UpdateGameStatus};
+use crate::game_command::{CreateGame, JoinGame, PlayMove, UpdateGameStatus, UpdateName};
 use actix::prelude::*;
 use serde::Serialize;
 use std::collections::HashMap;
@@ -45,19 +45,21 @@ struct Game {
 
 impl Game {
     fn new(name: String, player_one: Uuid, player_one_color: String) -> Self {
-       Self {
-          name, 
-          player_one,
-          player_one_color: player_one_color.clone(),
-          player_two: None,
-          player_two_color: match player_one_color.as_str() {
-            "w" => String::from("b"),
-            "b" => String::from("w"),
-            _ => panic!("unable to parse color")
-          }
-       } 
+        Self {
+            name,
+            player_one,
+            player_one_color: player_one_color.clone(),
+            player_two: None,
+            player_two_color: match player_one_color.as_str() {
+                "w" => String::from("b"),
+                "b" => String::from("w"),
+                _ => panic!("unable to parse color"),
+            },
+        }
     }
 }
+
+// impl WsServerState for InMemoryState {}
 
 pub struct WsChessServer {
     /// A session holds the name of the player and its actor address to send messages to
@@ -133,7 +135,8 @@ impl Handler<CreateGame> for WsChessServer {
         println!("Creating game");
 
         let id = Uuid::new_v4();
-        self.games.insert(id, Game::new(msg.name, msg.player_one_id, msg.color));
+        self.games
+            .insert(id, Game::new(msg.name, msg.player_one_id, msg.color));
 
         println!("Game created!");
 
@@ -151,7 +154,6 @@ impl Handler<JoinGame> for WsChessServer {
         println!("Joining game {}", msg.id);
 
         if let Some(game) = self.games.get_mut(&msg.id) {
-
             if game.player_two.is_some() {
                 println!("the game is full, unable to join");
                 return Err("Game is full".to_string());
@@ -162,7 +164,7 @@ impl Handler<JoinGame> for WsChessServer {
 
                 let player_two_color = game.player_two_color.clone();
                 let gameName = game.name.clone();
-                
+
                 // notify other player that the current player has joined
                 // we have to clone the player_one_id here because of https://doc.rust-lang.org/nomicon/lifetime-mismatch.html
                 let player_one_id = game.player_one.clone();
@@ -181,12 +183,13 @@ impl Handler<JoinGame> for WsChessServer {
                     id: msg.id,
                     player_id: player_one_id,
                     player_name: player_one_name.clone(),
-                    // also let the player two knows what color they're playing as 
-                    color: player_two_color
+                    // also let the player two knows what color they're playing as
+                    color: player_two_color,
                 };
-                let mut res = serde_json::to_string::<JoinGame>(&new_msg).map_err(|e| e.to_string())?;
+                let mut res =
+                    serde_json::to_string::<JoinGame>(&new_msg).map_err(|e| e.to_string())?;
                 res.insert_str(1, &format!("\"name\":\"{}\",", gameName));
-                
+
                 self.send_message(&format!("JoinGame {}", res), &msg.player_id);
 
                 println!("joined game successfully");
