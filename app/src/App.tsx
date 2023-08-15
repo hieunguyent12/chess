@@ -1,10 +1,13 @@
-import { useState, useEffect } from "react";
 import "./App.css";
-import Board from "./ui/board";
-import { Chess } from "./chess";
-import { Move } from "./types";
+import Chess from "./containers/chess";
 
 function App() {
+  return <Chess />;
+}
+
+export default App;
+
+/*function App() {
   const [chess] = useState<Chess>(() => {
     const chess = new Chess();
     chess.newGame();
@@ -114,7 +117,6 @@ function App() {
       <Board
         board={chess.board}
         turn={chess.turn == "w" ? "white" : "black"}
-        flipped={flipped}
         play_move={play_move}
         getLegalMoves={getLegalMoves}
       />
@@ -161,3 +163,4 @@ function App() {
 }
 
 export default App;
+*/
