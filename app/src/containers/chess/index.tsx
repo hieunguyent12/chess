@@ -32,7 +32,7 @@ function Chess() {
   useEffect(() => {
     const { engine } = chessStore;
 
-    let unsubscribe = engine.subscribeToGameEvents((evt) => {
+    let unsubscribeToGameEngine = engine.subscribeToGameEvents((evt) => {
       switch (evt) {
         case "new-game":
           rerender({});
@@ -40,12 +40,23 @@ function Chess() {
         case "move":
           rerender({});
           break;
+        case "new-status":
+          const myStatus = engine.gameStatus[chessStore.myColor];
+          if (myStatus.win) {
+            console.log(`You won by ${myStatus.win}`);
+          } else if (myStatus.lose) {
+            console.log(`You lose by ${myStatus.lose}`);
+          } else if (engine.gameStatus.draw) {
+            console.log(`Draw by ${engine.gameStatus.draw}`);
+          }
+
+          break;
         default:
           break;
       }
     });
 
-    wsClient.onmessage((msg) => {
+    let unsubscribeToWs = wsClient.onmessage((msg) => {
       switch (msg.type) {
         case "connect":
           console.log("Connected to WS server!");
@@ -79,8 +90,11 @@ function Chess() {
 
     engine.newGame();
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      unsubscribeToGameEngine();
+      unsubscribeToWs();
+    };
+  }, [chessStore]);
 
   const { engine, myColor, myName, gameName, setGameName, setMyName } =
     chessStore;

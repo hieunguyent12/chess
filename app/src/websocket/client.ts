@@ -81,8 +81,13 @@ export class WebsocketChessClient implements WebsocketClient {
     );
   }
 
-  onmessage(cb: (msg: ServerMessage) => void): void {
+  onmessage(cb: (msg: ServerMessage) => void): () => void {
     this.subscribers.push(cb);
+
+    return () => {
+      let idx = this.subscribers.indexOf(cb);
+      this.subscribers.splice(idx, 1);
+    };
   }
 
   private listen() {

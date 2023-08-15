@@ -19,5 +19,5 @@ export interface WebsocketClient {
   makeMove(m: Move): void;
   updateGameState(): void;
   updateName(name: string): void;
-  onmessage(cb: (msg: ServerMessage) => void): void;
+  onmessage(cb: (msg: ServerMessage) => void): () => void;
 }
