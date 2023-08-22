@@ -84,20 +84,17 @@ impl<T: WsServer> StreamHandler<Result<ws::Message, ws::ProtocolError>> for Sess
             ws::Message::Text(text) => {
                 match parse_text(text.into(), &self.id, &self.server_addr) {
                     Ok(_) => {}
-                    Err(e) => {
+                    Err(_) => {
                         ctx.close(Some(CloseReason {
-                            code: ws::CloseCode::Error,
-                            description: Some(format!(
-                                "Unable to parse sent message: {}",
-                                e.to_string()
-                            )),
+                            code: ws::CloseCode::Normal,
+                            description: Some(format!("Error")),
                         }));
                         ctx.stop();
                     }
                 };
             }
-            ws::Message::Close(reason) => {
-                ctx.close(reason);
+            ws::Message::Close(_) => {
+                // ctx.close(reason);
                 ctx.stop();
             }
             _ => {}

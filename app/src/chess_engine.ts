@@ -4,19 +4,25 @@ import { Move } from "./types";
 
 type GameEvent = "move" | "new-game" | "new-status";
 
-enum WinLoseCondition {
+export enum WinLoseCondition {
   Checkmate = "checkmate",
   Resign = "resign",
   Overtime = "overtime",
 }
 
-enum DrawCondition {
+export enum DrawCondition {
   InsufficientMaterial = "insufficient_material",
   Stalemate = "stalemate",
   Repetition = "repetition",
 }
 
-interface GameStatus {
+export interface GameStatus {
+  white: PlayerStatus;
+  black: PlayerStatus;
+  draw: DrawCondition | null;
+}
+
+export interface PlayerStatus {
   win: WinLoseCondition | null;
   lose: WinLoseCondition | null;
   // draw: DrawCondition | null;
@@ -27,14 +33,10 @@ export class ChessEngine {
 
   // private defaultFen =
   //   "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-  private defaultFen = "8/k4P2/8/8/8/8/2p5/7K w - - 0 1";
+  private defaultFen = "k7/2Q5/1K6/8/8/8/8/8 w - - 0 1";
   // Subscribers will be notified whenever any events happen, like making a move
   private subscribers: ((eventType: GameEvent) => void)[] = [];
-  public gameStatus: {
-    white: GameStatus;
-    black: GameStatus;
-    draw: DrawCondition | null;
-  } = {
+  public gameStatus: GameStatus = {
     draw: null,
     white: {
       win: null,
@@ -47,6 +49,7 @@ export class ChessEngine {
   };
 
   public board: Uint8Array;
+  public isGameInProgress: boolean = false;
   // public myColor: Color;
   // public opponent: Opponent | null;
   // public gameStatus: GameStatus;
@@ -61,6 +64,7 @@ export class ChessEngine {
   public newGame(fen: string = this.defaultFen) {
     this.wasmEngine.load_fen(fen);
     this.notifySubscribers("new-game");
+    this.isGameInProgress = true;
   }
 
   public move(m: Move) {
@@ -113,15 +117,19 @@ export class ChessEngine {
       }
 
       this.notifySubscribers("new-status");
+      this.isGameInProgress = false;
     } else if (engine.is_repetition()) {
       this.gameStatus.draw = DrawCondition.Repetition;
       this.notifySubscribers("new-status");
+      this.isGameInProgress = false;
     } else if (engine.is_insufficient_materials()) {
       this.gameStatus.draw = DrawCondition.InsufficientMaterial;
       this.notifySubscribers("new-status");
+      this.isGameInProgress = false;
     } else if (engine.is_stalemate()) {
       this.gameStatus.draw = DrawCondition.Stalemate;
       this.notifySubscribers("new-status");
+      this.isGameInProgress = false;
     }
   }
 

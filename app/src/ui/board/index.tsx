@@ -59,6 +59,11 @@ function Board({ board, myColor, play_move, getLegalMoves }: BoardProps) {
         m.to
       }`;
 
+      const highlightChild = document.createElement("div");
+
+      highlightChild.className = `block rounded-full bg-slate-200`;
+      highlightDiv.appendChild(highlightChild);
+
       boardEl.current.appendChild(highlightDiv);
     });
 
@@ -71,7 +76,6 @@ function Board({ board, myColor, play_move, getLegalMoves }: BoardProps) {
     let file = clamp(Math.floor(boardx / pieceRect.width), 0, 7);
     let rank = clamp(7 - Math.floor(boardy / pieceRect.height) + 1, 1, 8);
 
-    // TODO: do this declaratively (useState)
     hoverSquareRef.current.style.visibility = "visible";
     hoverSquareRef.current.classList.toggle(
       `sq-${String.fromCharCode(97 + file)}${rank}`
@@ -191,7 +195,7 @@ function Board({ board, myColor, play_move, getLegalMoves }: BoardProps) {
 
       moveRef.current.to = to;
 
-      hoverSquareRef.current.className = `hover-square ${
+      hoverSquareRef.current.className = `hover-square border-4 border-slate-300 ${
         flipped ? "flipped" : ""
       } sq-${to}`;
       // hoverSquareRef.current.classList.toggle(`sq-${String.fromCharCode(97 + file)}${rank}`);
@@ -273,7 +277,10 @@ function Board({ board, myColor, play_move, getLegalMoves }: BoardProps) {
         onSelectPromotionPiece={onSelectPromotionPiece}
         color={moveRef.current ? moveRef.current.color : undefined}
       />
-      <div ref={hoverSquareRef} className="hover-square"></div>
+      <div
+        ref={hoverSquareRef}
+        className="hover-square border-4 border-slate-300"
+      ></div>
       {renderBoard()}
     </div>
   );

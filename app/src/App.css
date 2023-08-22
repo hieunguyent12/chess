@@ -103,6 +103,15 @@
 /* height: 100%; */
 /* } */
 
+input {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+.ReactModal__Overlay {
+  position: absolute !important;
+}
+
 .left-section {
   grid-area: left;
 }
@@ -117,14 +126,22 @@
 }
 
 .my-name {
+  border: none;
   grid-area: name;
+}
+
+.my-name[type="text"] {
+  font-size: 1.3rem;
   /* align-self: flex-start;  */
+}
+
+.opponent-name {
+  font-size: 1.3rem;
 }
 
 .name {
   padding: 0;
-  margin: 0;
-  font-size: 1.3rem;
+  margin: 10px 10px;
 }
 
 .chess-board {
@@ -137,12 +154,16 @@
 
   max-width: var(--boardMaxWidth);
   max-height: var(--boardMaxHeight);
-  background-image: url("./assets/chess_board.png");
+  background-image: url("./assets/chess_brown_board.png");
   background-repeat: no-repeat;
   background-size: 100%;
   contain: layout;
   position: relative;
   border-radius: 3px;
+}
+
+.color-select {
+  max-width: 65px;
 }
 
 .svg-piece {
@@ -165,15 +186,21 @@
   position: absolute;
   width: 12.5%;
   height: 12.5%;
-  background-color: blue;
 }
 
 .highlight {
-  display: block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   position: absolute;
   width: 12.5%;
   height: 12.5%;
-  background-color: blue;
+  /* background-color: blue; */
+}
+
+.highlight div {
+  width: 12.5%;
+  height: 12.5%;
 }
 
 .promotion-window {
@@ -214,7 +241,7 @@
 }
 
 @media only screen and (min-width: 800px) {
-  .app-container {
+  .chess-container {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -233,6 +260,7 @@
   }
 
   .name {
+    margin: 10px 0;
     align-self: flex-start;
   }
 }
@@ -243,7 +271,7 @@
     /* justify-content: center; */
     align-items: center;
   }
-  .app-container {
+  .chess-container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     grid-template-areas:
@@ -253,8 +281,8 @@
     row-gap: 5px;
     width: 100%;
     height: 100%;
-    max-width: 100%;
-    margin: 0;
+    max-width: 1400px;
+    margin: 0 auto;
     justify-items: normal;
     align-items: normal;
   }
@@ -271,11 +299,16 @@
     align-self: center;
     justify-self: center;
   }
+
+  .name {
+    margin: 0;
+  }
 }
 
 /* .flipped { */
 /*     transform-origin: 50% 50%; */
 /*     rotate: 180deg; */
+
 /* } */
 /**/
 /* https://stackoverflow.com/questions/11160227/translate-x-and-y-percentage-values-based-on-elements-height-and-width */
@@ -666,54 +699,6 @@
   transform: var(--a1);
 }
 
-.w_king {
-  background-image: url("./assets/w_king.png");
-}
-
-.b_king {
-  background-image: url("./assets/b_king.png");
-}
-
-.w_queen {
-  background-image: url("./assets/w_queen.png");
-}
-
-.b_queen {
-  background-image: url("./assets/b_queen.png");
-}
-
-.w_rook {
-  background-image: url("./assets/w_rook.png");
-}
-
-.b_rook {
-  background-image: url("./assets/b_rook.png");
-}
-
-.w_bishop {
-  background-image: url("./assets/w_bishop.png");
-}
-
-.b_bishop {
-  background-image: url("./assets/b_bishop.png");
-}
-
-.w_knight {
-  background-image: url("./assets/w_knight.png");
-}
-
-.b_knight {
-  background-image: url("./assets/b_knight.png");
-}
-
-.w_pawn {
-  background-image: url("./assets/w_pawn.png");
-}
-
-.b_pawn {
-  background-image: url("./assets/b_pawn.png");
-}
-
 /* .flipped { */
 /* transform: rotate(180deg); */
 /* } */
@@ -722,41 +707,3 @@
   rotate: 180deg;
   transform-origin: 50% 50%;
 }
-
-/* 
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-} */

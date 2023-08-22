@@ -5,27 +5,28 @@ use serde::*;
 use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum PlayerStatus {
-    Playing,
+pub enum DrawCondition {
+    InsufficientMaterial,
+    Stalemate,
+    Repetition,
+}
 
-    WonByCheckmate,
-    WonByOvertime,
-    WonByResign,
+#[derive(Debug, Serialize, Deserialize)]
+pub enum WinLoseCondition {
+    Checkmate,
+    Resign,
+    Overtime,
+}
 
-    LostByCheckmate,
-    LostByOvertime,
-    LostByResign,
-
-    DrawByRepetition,
-    DrawByInsufficientMaterial,
-    DrawByAgreement,
-    DrawByStalemate,
-    DrawBy50Moves,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PlayerStatus {
+    win: Option<WinLoseCondition>,
+    lose: Option<WinLoseCondition>,
 }
 
 #[derive(Debug)]
 pub struct GameState {
-    pub is_finished: bool,
+    pub draw: Option<DrawCondition>,
     pub player_one: PlayerStatus,
     pub player_two: PlayerStatus,
 }
@@ -63,9 +64,15 @@ impl Game {
             player_one_id,
             player_two_id: None,
             game_state: GameState {
-                is_finished: false,
-                player_one: PlayerStatus::Playing,
-                player_two: PlayerStatus::Playing,
+                draw: None,
+                player_one: PlayerStatus {
+                    win: None,
+                    lose: None,
+                },
+                player_two: PlayerStatus {
+                    win: None,
+                    lose: None,
+                },
             },
         }
     }
@@ -162,7 +169,7 @@ impl WsServer for InMemoryServer {
 
                     let game_id = game_id.clone();
 
-                    game.game_state.is_finished = true;
+                    // game.game_state.is_finished = true;
 
                     // This is temporary
                     // Delete the game since it is finished

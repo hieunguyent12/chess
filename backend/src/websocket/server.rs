@@ -154,8 +154,8 @@ impl<T: WsServer> Handler<UpdateGameState> for WsChessServer<T> {
     type Result = ();
 
     fn handle(&mut self, msg: UpdateGameState, _: &mut Self::Context) -> Self::Result {
-        self.inner_server
-            .update_game_state(&msg.player_id, msg.new_status);
+        // TODO: IMPLEMENT
+        // we want to send the client a message to update their game state, not the other way around
     }
 }
 

@@ -1,23 +1,11 @@
 import { create } from "zustand";
-import { ChessEngine } from "../chess_engine";
+import { ChessEngine, DrawCondition, WinLoseCondition } from "../chess_engine";
 import { Color } from "../types";
 
-interface Opponent {
+export interface Opponent {
   id: string;
   name: string;
   color: string;
-}
-
-enum WinLoseCondition {
-  Checkmate,
-  Resign,
-  Overtime,
-}
-
-enum DrawCondition {
-  InsufficientMaterial,
-  Stalemate,
-  Repetition,
 }
 
 interface GameStatus {
@@ -42,7 +30,9 @@ interface ChessGame {
   setMyColor: (myColor: Color) => void;
   setGameName: (gameName: string) => void;
   setGameId: (gameId: string) => void;
+  setGameStatus: (gameStatus: GameStatus) => void;
   setOpponent: (opponent: Opponent) => void;
+  resetGame: () => void;
 }
 
 const engine = new ChessEngine();
@@ -70,5 +60,19 @@ export const useChessStore = create<ChessGame>((set) => ({
   setMyColor: (myColor: Color) => set({ myColor }),
   setGameName: (gameName: string) => set({ gameName }),
   setGameId: (gameId: string) => set({ gameId }),
+  setGameStatus: (gameStatus: GameStatus) => set({ gameStatus }),
   setOpponent: (opponent: Opponent) => set({ opponent }),
+
+  resetGame: () =>
+    set({
+      opponent: null,
+      gameId: null,
+      gameName: "",
+      myColor: "white",
+      gameStatus: {
+        win: null,
+        lose: null,
+        draw: null,
+      },
+    }),
 }));
