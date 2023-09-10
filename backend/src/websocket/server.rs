@@ -16,11 +16,15 @@ use crate::{
 };
 pub struct WsChessServer<T: WsServer> {
     inner_server: T,
+    player_count: u8,
 }
 
 impl<T: WsServer> WsChessServer<T> {
     pub fn new(inner_server: T) -> Self {
-        Self { inner_server }
+        Self {
+            inner_server,
+            player_count: 0,
+        }
     }
 }
 
@@ -32,6 +36,10 @@ impl<T: WsServer> Handler<Connect> for WsChessServer<T> {
     type Result = ();
 
     fn handle(&mut self, msg: Connect, _: &mut Self::Context) -> Self::Result {
+        if self.player_count >= 3 {
+            println!("player count limit reached, can't connect");
+            return;
+        }
         println!("Someone connected!");
 
         let id = msg.id.clone();
@@ -54,6 +62,8 @@ impl<T: WsServer> Handler<Connect> for WsChessServer<T> {
         .expect("unable to parse connect message");
 
         self.inner_server.send(id.as_str(), Message(client_msg));
+
+        self.player_count += 1;
     }
 }
 
@@ -66,6 +76,7 @@ impl<T: WsServer> Handler<Disconnect> for WsChessServer<T> {
         self.inner_server.delete_session(&msg.id);
 
         println!("{:?}", self.inner_server);
+        self.player_count = self.player_count.saturating_sub(1);
     }
 }
 
@@ -73,9 +84,15 @@ impl<T: WsServer> Handler<CreateGame> for WsChessServer<T> {
     type Result = ();
 
     fn handle(&mut self, mut msg: CreateGame, _: &mut Self::Context) -> Self::Result {
+        if self.player_count >= 3 {
+            println!("player limit reached, cant create games");
+            return;
+        }
         println!("Creating game");
 
         let player_id = msg.player_id.clone();
+
+        println!("{}", player_id);
 
         let id = self
             .inner_server
@@ -100,6 +117,9 @@ impl<T: WsServer> Handler<JoinGame> for WsChessServer<T> {
     type Result = ();
 
     fn handle(&mut self, msg: JoinGame, _: &mut Self::Context) -> Self::Result {
+        if self.player_count >= 3 {
+            return;
+        }
         println!("Joining game");
 
         let player_id = msg.player_id.clone();

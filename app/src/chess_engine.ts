@@ -31,9 +31,9 @@ export interface PlayerStatus {
 export class ChessEngine {
   private wasmEngine: ChessWasm;
 
-  // private defaultFen =
-  //   "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-  private defaultFen = "k7/2Q5/1K6/8/8/8/8/8 w - - 0 1";
+  private defaultFen =
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+  // private defaultFen = "k7/2Q5/1K6/8/8/8/8/8 w - - 0 1";
   // Subscribers will be notified whenever any events happen, like making a move
   private subscribers: ((eventType: GameEvent) => void)[] = [];
   public gameStatus: GameStatus = {
