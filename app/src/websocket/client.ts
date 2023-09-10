@@ -22,7 +22,7 @@ export class WebsocketChessClient implements WebsocketClient {
   private messagesQueue = [];
 
   constructor() {
-    let url = "ws://127.0.0.1:8080/ws";
+    let url = `ws://${window.location.hostname}/ws`;
 
     if (!this.socket) {
       this.socket = new WebSocket(url);
